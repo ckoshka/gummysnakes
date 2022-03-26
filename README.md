@@ -38,3 +38,12 @@ gimme_an_orange = Seed() >> OrangeJuice
 
 print(f"Here is your orange juice: {gimme_an_orange}")
 ```
+
+Result:
+
+```bash
+This might take a while...
+Picking some oranges for you...
+Making orange juice!
+Here is your orange juice: OrangeJuice({})
+```
