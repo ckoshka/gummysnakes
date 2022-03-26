@@ -122,5 +122,69 @@ class Router:
         else:
             raise TypeError("No conversion from {} to {}".format(origin_type, target_type))
 
+from concurrent.futures import ThreadPoolExecutor
+import contextlib
+class Overloader:
+    # Returned when OverloadManager is called, contains a function, calls it as appropriate.
+    def __init__(self, func: Callable):
+        self.func = func
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+    def __rshift__(self, func2: 'Overloader'):
+        def combined_func(*args, **kwargs):
+            return func2(self.func(*args, **kwargs))
+        return Overloader(combined_func)
+    def __mul__(self, num: int) -> Generator:
+        def repeat_func(*args, **kwargs):
+            return [self.func(*args, **kwargs) for _ in range(num)]
+        return Overloader(repeat_func)
+    def __or__(self, func2: 'Overloader') -> 'Overloader':
+        def combined_func(*args, **kwargs):
+            try:
+                return self.func(*args, **kwargs)
+            except:
+                return func2(*args, **kwargs)
+        return Overloader(combined_func)
+    def __and__(self, func2: 'Overloader') -> 'Overloader':
+        def both_at_once(*args, **kwargs):
+            pool = ThreadPoolExecutor(max_workers=2)
+            with pool as executor:
+                res1 = executor.submit(self.func, *args, **kwargs)
+                res2 = executor.submit(func2, *args, **kwargs)
+                return res1.result(), res2.result()
+        return Overloader(both_at_once)
+    def __pow__(self, repeats: int) -> 'Overloader':
+        # Same as the above, except it repeats the function num times.
+        def all_at_once(*args, **kwargs):
+            pool = ThreadPoolExecutor(max_workers=repeats)
+            with pool as executor:
+                if isinstance(args, str):
+                    args = [args]
+                res = executor.map(self.func, *args, **kwargs)
+                return [r for r in res]
+        return Overloader(all_at_once)
+    def __lshift__(self, func2):
+        def frozen_func(*args, **kwargs):
+            return self.func(func2(*args, **kwargs))
+        return Overloader(frozen_func)
+    def __getitem__(self, *args, **kwargs) -> 'Overloader':
+        def delayedfunc():
+            return self.func(*args, **kwargs)
+        return Overloader(delayedfunc)
+    # For fun, we'll also define a context manager.
+    def __enter__(self):
+        return self.func
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+    @classmethod
+    def overload(cls, func: Callable):
+        return cls(func)
+    @classmethod
+    def do_all(cls):
+        funcs = [name for name, f in globals().items() if inspect.isfunction(f) and name != "overload"]
+        for func in funcs:
+            globals()[func] = cls.overload(globals()[func])
+            
+overload = Overloader.overload
 
 coerce = Router.add       
