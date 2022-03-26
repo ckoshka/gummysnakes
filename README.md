@@ -2,23 +2,39 @@
 
 ```python
 from gummysnakes import coerce
-@coerce
-class Food:
-    def __init__(self, foodname: str) -> 'Food':
-        self.foodname = foodname
 
 @coerce
-def str_to_food(s: str) -> Food:
-    return Food(s)
+class Seed:
+    pass
 
 @coerce
-def food_to_review(f: Food) -> 'Review':
-    return f"I ate {f.foodname} and it was delicious"
+class OrangeTree:
+    pass
 
 @coerce
-def review_to_metareview(r: 'Review') -> 'MetaReview':
-    return f"{r}? What a horrible review."
+def grow_seed(s: Seed) -> OrangeTree:
+    print("This might take a while...")
+    return OrangeTree()
 
-result = Food("oranges") >> 'MetaReview'
-print(result)
+@coerce
+class Orange:
+    pass
+
+@coerce
+def pick_oranges(t: OrangeTree) -> List[Orange]:
+    print("Picking some oranges for you...")
+    return [Orange()]
+
+@coerce
+class OrangeJuice:
+    pass
+
+@coerce
+def make_orange_juice(os: List[Orange]) -> OrangeJuice:
+    print("Making orange juice!")
+    return OrangeJuice()
+
+gimme_an_orange = Seed() >> OrangeJuice
+
+print(f"Here is your orange juice: {gimme_an_orange}")
 ```
