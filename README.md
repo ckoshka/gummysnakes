@@ -17,7 +17,7 @@ def food_to_review(f: Food) -> 'Review':
 
 @coerce
 def review_to_metareview(r: 'Review') -> 'MetaReview':
-    return f"{r} and I'm glad I did"
+    return f"{r}? What a horrible review."
 
 result = Food("oranges") >> 'MetaReview'
 print(result)
